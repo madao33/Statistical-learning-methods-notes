@@ -72,7 +72,7 @@ $$ \min \limits_{w,b} L(w,b)=-\sum \limits_{x_i \in M} y_i(w \cdot x_i + b) $$
 (3) 如果$y_i(w \cdot x_i + b) \leq 0$
 
 $$\begin{array}{cc}
-w \leftarrow w + \eta y_i x_i\\b \leftarrow b + \eta y_i
+w \leftarrow w + \eta y_i x_i \\ b \leftarrow b + \eta y_i
 \end{array}$$
 
 (4) 转至(2)，直至训练集中没有误分类点
