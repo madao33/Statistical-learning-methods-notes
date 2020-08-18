@@ -1,5 +1,3 @@
-
-
 # 第七章 支持向量机(Support Vector Machines, SVM)
 
 ## 前言
@@ -18,9 +16,9 @@ SVM从简单到复杂分为：
 
 简单的模型是复杂模型的基础，而复杂模型是简单模型的特殊情况，类似于马哲中个性与共性的关系。三种模型的区分如下：
 
-- 训练数据可分，通过硬间隔最大化(hard margin maximization)，得到一个线性分类器，即线性可分支持向量机，也称硬间隔支持向量机
-- 训练数据接近线性可分时，通过软间隔最大化(soft margin maximization)，得到的线性分类器，即线性支持向量机，又称为软间隔支持向量机
-- 训练数据线性不可分时，通过使用核技巧及软间隔最大化，学习非线性支持向量机
+* 训练数据可分，通过硬间隔最大化(hard margin maximization)，得到一个线性分类器，即线性可分支持向量机，也称硬间隔支持向量机
+* 训练数据接近线性可分时，通过软间隔最大化(soft margin maximization)，得到的线性分类器，即线性支持向量机，又称为软间隔支持向量机
+* 训练数据线性不可分时，通过使用核技巧及软间隔最大化，学习非线性支持向量机
 
 以下按照上述所述的顺序介绍三种SVM、核函数以及SVM快速学习方法——序列最小最优化算法(SMO)
 
@@ -174,8 +172,78 @@ $$h_i(w)=0, \quad i=1,2,...,l \tag{7.17}$$
 具体的证明可以参考[1]中p117-p118
 
 #### 3. 支持向量和间隔边界
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20200813172606346.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM2MTc4OTYy,size_16,color_FFFFFF,t_70#pic_center)
 
+* 线性可分情况下, 训练数据集的样本点中与分离超平面距离最近的样本点的实例称为**支持向量(support vector)**
+
+>支持向量是使约束条件 $(7.14)$ 等号成立的点: $y_i(w \cdot x_i +b)=1$
+>如图7.3所示, 在 $H_1$ 上和 $H_2$ 上的点就是*支持向量*
+
+* $H_1$ 和 $H_2$ 之间的距离称为**间隔(margin)**, 间隔依赖于超平面的法向量 $w$, 等于 $\frac{2}{||w||}$
+* $H_1$ 和 $H_2$ 称为**间隔边界**
+* 分离超平面与间隔边界平行且处于中央
+
+>决定分离超平面时只有支持向量起作用, 支持向量起着绝对的作用, 所以称这种分类模型为支持向量机
+>支持向量的个数一般很少, 所以支持向量机由很少的重要训练样本确定
+
+### 7.1.4 学习的对偶算法
+
+支持向量机的最优化问题是式 $(7.13)-(7.14)$, 直接求解这个问题是比较复杂的, 可以利用拉格朗日对偶性, 得到该问题的对偶问题(dual problem).
+
+这样做的好处是:
+
+* 对偶问题更容易求解
+* 自然引入核函数
+
+构造拉格朗日函数:
+
+$$L(w,b,a)=\frac{1}{2}||w||^2-\sum_{i=1}^N a_i y_i (w \cdot x_i +b) + \sum_{i=1}^N a_i \tag{7.18}$$
+
+其中$a=(a_1,a_2,...,a_N)^T$是拉格朗日乘子向量
+
+原始问题转换为对偶问题的极大极小解，先求 $L(w,b,a)$ 对 $w,b$ 的极小，在求对 $a$ 的极小
+
+$$\max_a \min_{w,b} L(w,b,a)$$
+
+对上式的求解，按照从里到外的顺序求解，首先求解 $\min_{w, b}L(w,b,a)$，再求解 $\min_{w, b}L(w,b,a)$ 对 $a$ 的极大
+
+1. 求 $\min_{w, b}L(w,b,a)$
+拉格朗日函数 $L(w,b,a)$ 分别对 $w,b$ 求偏导并令其等于0
+
+$$\nabla_w L(w,b,a)=w-\sum_{i=1}^N a_i y_i x_i =0$$
+
+$$\nabla_b L(w,b,a)=\sum_{i=1}^N a_i y_i = 0$$
+
+得到
+
+$$w=\sum_{i=1}^N a_i y_i x_i \tag{7.19}$$
+
+$$\nabla_b L(w,b,a)=\sum_{i=1}^N a_i y_i = 0\tag{7.20}$$
+
+将式 $(7.19)$ 代入拉格朗日函数 $(7.18)$，并利用式 $(7.20)$得到
+
+$$\begin{aligned}
+L(w,b,a)&=\frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N a_i a_j y_i y_j(x_i \cdot x_j) - \sum_{i=1}^N a_i y_i \Bigg( 
+\Bigg(\sum_{j=1}^N a_j y_j x_j \Bigg) \cdot x_i +b \Bigg) + \sum_{i=1}^N a_i \\
+&=-\frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N a_i a_j y_i y_j(x_i \cdot x_j) \sum_{i=1}^N a_i
+\end{aligned}$$
+
+2. 求 $\min_{w, b}L(w,b,a)$ 对 $a$ 的极大，即是对偶问题
+
+$$\max_a -\frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N a_i a_j y_i y_j (x_i \cdot x_j) + \sum_{i=1}^N a_i \tag{7.21}$$
+
+$$s.t. \quad \sum_{i=1}^N a_i y_i =0 $$
+
+$$a_i\geq 0, i=1,2,...N$$
+
+去掉负号，得到以下等价的对偶优化问题，**求极大变为求极小**
+
+$$\min_a \frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N a_i a_j y_i y_j (x_i \cdot x_j) - \sum_{i=1}^N a_i \tag{7.22}$$
+
+$$s.t. \quad \sum_{i=1}^N a_i y_i =0 \tag{7.23}$$
+
+$$a_i\geq 0, i=1,2,...N \tag{7.24}$$
 
 
 
